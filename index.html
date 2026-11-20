@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>YT Analyser — Title · Tags · 4K Thumbnail · Growth Plan</title>
+  <meta name="description" content="Free YouTube video analyser: titles, description, tags, 10 pro 4K thumbnails, weaknesses and growth plan." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Mukta:wght@800&family=Hind+Siliguri:wght@700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>" />
+</head>
+<body>
+  <header>
+    <h1>🎬 YT Analyser</h1>
+    <p>Video dao → 10 ta title, description, tags, <b>10 ta pro 4K thumbnail</b>, komti r views barano-r plan. Puro free.</p>
+  </header>
+
+  <main>
+    <!-- SETTINGS -->
+    <details class="card" id="settingsCard">
+      <summary>⚙️ Settings <span id="keyStatus" class="pill"></span></summary>
+      <div class="grid">
+        <label>Gemini API key <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">(free key)</a>
+          <input type="password" id="geminiKey" placeholder="AIza…" autocomplete="off" /></label>
+        <label>YouTube Data API key <a href="https://console.cloud.google.com/apis/library/youtube.googleapis.com" target="_blank" rel="noopener">(free key)</a>
+          <input type="password" id="ytKey" placeholder="AIza… (optional, kintu dile research hobe)" autocomplete="off" /></label>
+        <label>Title / description / tags-er bhasha
+          <select id="outLang">
+            <option>Hinglish (Hindi in English letters)</option><option>Hindi (Devanagari)</option>
+            <option>English</option><option>Bengali</option><option>Hindi + English mix</option>
+          </select></label>
+        <label>Report-er bhasha
+          <select id="reportLang">
+            <option>Banglish (Bengali in English letters)</option><option>Bengali</option><option>Hinglish</option><option>English</option>
+          </select></label>
+        <label>Thumbnail lekha
+          <select id="thumbScript"><option>Latin (Hinglish/English)</option><option>Devanagari (Hindi)</option></select></label>
+        <label>Thumbnail shape
+          <select id="shape"><option value="auto">Auto (video onujayi)</option><option value="landscape">Landscape 16:9</option><option value="vertical">Vertical 9:16</option></select></label>
+        <label>Thumbnail quality
+          <select id="quality"><option value="4k">4K (3840×2160)</option><option value="1080">1080p (taratari)</option></select></label>
+        <label>Koto ta thumbnail
+          <input type="number" id="nThumbs" min="4" max="12" value="10" /></label>
+        <label class="wide">Channel note (AI-ke context)
+          <input type="text" id="channelNote" placeholder="jemon: Hindi AI system story channel, poor boy gets a System" /></label>
+        <label>Region <input type="text" id="region" value="IN" maxlength="2" /></label>
+        <label class="check"><input type="checkbox" id="cutout" checked /> Subject cut-out (pop style)</label>
+      </div>
+      <p class="hint">🔒 Key gulo shudhu tomar browser-e save thake (localStorage). Code ba server-e kothao jay na.</p>
+    </details>
+
+    <!-- INPUT -->
+    <section class="card">
+      <h2>1. Video dao</h2>
+      <label>YouTube link (upload hoye thakle — views/tags ashbe, r Gemini sorasori link theke video dekhbe)
+        <input type="url" id="ytUrl" placeholder="https://youtu.be/…" /></label>
+      <label class="file">Video file (mp4) — thumbnail-er jonno lagbe, original/best quality file dao
+        <input type="file" id="videoFile" accept="video/*" /></label>
+      <video id="preview" controls muted playsinline hidden></video>
+      <button id="runBtn" class="primary">🚀 Analyse shuru koro</button>
+      <p class="hint">Analysis cholar shomoy ei tab khola rekho. Lomba video hole YouTube link dile taratari hoy.</p>
+    </section>
+
+    <!-- PROGRESS -->
+    <section class="card" id="progressCard" hidden>
+      <h2>⏳ Kaaj cholchhe</h2>
+      <ol id="steps"></ol>
+      <div class="bar"><div id="barFill"></div></div>
+      <pre id="log"></pre>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="results" hidden>
+      <div class="card" id="summaryCard"></div>
+
+      <div class="card">
+        <div class="row between">
+          <h2>🖼️ Thumbnails</h2>
+          <button id="zipBtn">📦 Sob download (zip)</button>
+        </div>
+        <p class="hint">Pochondo-r ta-r <b>4K</b> (computer theke upload, limit 50MB) ba <b>Mobile</b> (&lt;2MB, phone theke upload) download koro. ✏️ diye lekha/rong/frame bodlao.</p>
+        <div id="thumbGrid" class="thumbs"></div>
+        <div class="row more">
+          <input type="text" id="moreWish" placeholder="Notun idea-r jonno instruction (jemon: aro dramatic, red, face close-up)" />
+          <button id="moreBtn">🔁 Notun idea</button>
+        </div>
+      </div>
+
+      <div class="card"><h2>🏷️ Titles</h2><ol id="titles" class="titles"></ol></div>
+
+      <div class="card">
+        <div class="row between"><h2>📝 Description</h2><button data-copy="desc">Copy</button></div>
+        <textarea id="desc" rows="12"></textarea>
+      </div>
+
+      <div class="card">
+        <div class="row between"><h2>🔖 Tags <small id="tagCount"></small></h2><button data-copy="tags">Copy</button></div>
+        <textarea id="tags" rows="4"></textarea>
+        <p><b>Hashtags:</b> <span id="hashtags"></span> <button class="small" data-copy-text="hashtags">Copy</button></p>
+        <p id="trendUsed" class="hint"></p>
+      </div>
+
+      <div class="card"><h2>⚠️ Ki komti ache → ki improve korbe</h2><div id="weak"></div></div>
+      <div class="card"><h2>🚀 Views barano plan</h2><div id="plan"></div></div>
+      <div class="card"><h2>📈 Market data</h2><div id="market"></div></div>
+    </section>
+  </main>
+
+  <!-- EDIT MODAL -->
+  <dialog id="editDlg">
+    <form method="dialog" id="editForm">
+      <h3>✏️ Thumbnail #<span id="editNum"></span> edit</h3>
+      <label>Main text <input id="eMain" /></label>
+      <label>Highlight word <input id="eHl" /></label>
+      <label>Sub text (badge) <input id="eSub" placeholder="khali rakhle badge thakbe na" /></label>
+      <div class="row">
+        <label>Text position <select id="ePos"><option>left</option><option>right</option><option>top</option><option>bottom</option></select></label>
+        <label>Layout <select id="eLayout"><option>pop</option><option>zoom</option><option>split</option><option>single</option></select></label>
+        <label>Rong <input type="color" id="eColor" /></label>
+      </div>
+      <p>Frame beche nao (split-e 2nd frame: Shift + click):</p>
+      <div id="eFrames" class="framepick"></div>
+      <div class="row between">
+        <button value="cancel">Bondho</button>
+        <button id="eSave" value="save" class="primary">Abar banao</button>
+      </div>
+    </form>
+  </dialog>
+
+  <footer>Made with free tools · Gemini API · YouTube Data API · runs in your browser</footer>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
